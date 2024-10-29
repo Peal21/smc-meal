@@ -10,12 +10,16 @@ const app = express();
 const PORT = 3000;
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/meal_management', {
+const uri = "mongodb+srv://askpeal121:Peal1234@cluster0.teofx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+
+mongoose.connect(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true
-})
-.then(() => console.log("MongoDB connected"))
-.catch(err => console.error("MongoDB connection error:", err));
+}).then(() => {
+    console.log("MongoDB Connected!");
+}).catch(err => {
+    console.error("MongoDB connection error:", err);
+});
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
@@ -47,6 +51,7 @@ const mealHistorySchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 const MealHistory = mongoose.model('MealHistory', mealHistorySchema);
 
+// Routes
 // Signup route
 app.post('/signup', async (req, res) => {
     const { name, classRoll, email, password, role } = req.body;
@@ -212,7 +217,6 @@ app.get('/export-excel', async (req, res) => {
     }
 });
 
-
 // Route to get today's meal status and total meal count for the user
 app.get('/get-meal-status', async (req, res) => {
     if (!req.session.userId) return res.status(401).send('You need to log in');
@@ -230,16 +234,17 @@ app.get('/get-meal-status', async (req, res) => {
         const dailyMealCount = todayMeal ? (todayMeal.meal === 'Both' ? 2 : 1) : 0;
 
         res.json({
-            dailyMealCount,
-            totalMealCount: user.totalMealCount
+            totalMealCount: user.totalMealCount,
+            mealStatus: todayMeal ? todayMeal.meal : 'Off',
+            dailyMealCount: dailyMealCount
         });
     } catch (error) {
         console.error("Error fetching meal status:", error);
-        res.status(500).send('Error fetching meal status');
+        res.status(500).send('Error fetching meal status. Please try again.');
     }
 });
 
-// Start the server
+// Starting the server
 app.listen(PORT, () => {
-    console.log(`Server started on http://localhost:${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
