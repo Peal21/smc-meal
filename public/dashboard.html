@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>User Dashboard</h1>
+        <form action="/update-meal" method="POST">
+            <label>
+                Lunch:
+                <input type="checkbox" name="lunch">
+            </label>
+            <label>
+                Dinner:
+                <input type="checkbox" name="dinner">
+            </label>
+            <button type="submit">Update Meals</button>
+        </form>
+        <h2>Registered Users:</h2>
+        <ul id="user-list">
+            <!-- User list will be dynamically generated here -->
+        </ul>
+        <a href="/">Logout</a>
+    </div>
+</body>
+</html>

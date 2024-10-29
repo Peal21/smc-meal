@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Update</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        label {
+            font-weight: bold;
+            margin: 10px 0;
+            display: block;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .meal-count {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .export-button {
+            background-color: #007bff;
+        }
+
+        .export-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Update Your Meal</h2>
+        <div>
+            <label for="mealSelection">Select Your Meal:</label>
+            <select id="mealSelection">
+                <option value="Lunch">Lunch</option>
+                <option value="Dinner">Dinner</option>
+                <option value="Both">Both</option>
+                <option value="Off">Off</option> <!-- Added Off option -->
+            </select>
+            <button onclick="updateMeal()">Update Meal</button>
+        </div>
+
+        <div class="meal-count">
+            <h3>Current Meal Status</h3>
+            <p>Daily Meal Count: <span id="dailyCount">0</span></p>
+            <p>Total Meal Count: <span id="totalCount">0</span></p>
+        </div>
+
+        <button class="export-button" onclick="exportToExcel()">Download Meal List</button>
+    </div>
+
+    <script>
+        async function loadMealData() {
+            try {
+                const response = await fetch('/get-meal-status');
+                const data = await response.json();
+                document.getElementById('dailyCount').textContent = data.dailyMealCount || 0;
+                document.getElementById('totalCount').textContent = data.totalMealCount || 0;
+            } catch (error) {
+                console.error('Error loading meal data:', error);
+            }
+        }
+
+        async function updateMeal() {
+            const meal = document.getElementById('mealSelection').value;
+            try {
+                const response = await fetch('/meal-update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ meal })
+                });
+                if (response.ok) {
+                    await loadMealData(); // Refresh the meal data on the page
+                    alert('Meal updated successfully');
+                } else {
+                    alert('Error updating meal');
+                }
+            } catch (error) {
+                console.error('Error updating meal:', error);
+                alert('Error updating meal');
+            }
+        }
+
+        async function exportToExcel() {
+            try {
+                const response = await fetch('/export-excel');
+                if (!response.ok) throw new Error('Error downloading Excel file');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'meal_update_list.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                alert('Excel file downloaded successfully');
+            } catch (error) {
+                console.error('Error exporting to Excel:', error);
+                alert('Error exporting to Excel');
+            }
+        }
+
+        // Load meal data on page load
+        document.addEventListener('DOMContentLoaded', loadMealData);
+    </script>
+</body>
+</html>
