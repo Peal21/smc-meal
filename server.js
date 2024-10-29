@@ -5,29 +5,32 @@ const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const path = require('path');
 const ExcelJS = require('exceljs');
-const cron = require('node-cron');
+require('dotenv').config(); // Load environment variables
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000; // Use Render's PORT or default to 3000
 
 // Connect to MongoDB
-const uri = "mongodb+srv://askpeal121:Peal1234@cluster0.teofx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+async function connectDB() {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+        console.log("MongoDB Connected!");
+    } catch (err) {
+        console.error("MongoDB connection error:", err);
+    }
+}
 
-mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    console.log("MongoDB Connected!");
-}).catch(err => {
-    console.error("MongoDB connection error:", err);
-});
+connectDB(); // Call the connection function
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static('public'));
 app.use(session({
-    secret: 'your_secret_key',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
 }));
@@ -232,12 +235,12 @@ app.get('/get-meal-status', async (req, res) => {
             date: today
         });
 
-        const dailyMealCount = todayMeal ? (todayMeal.meal === 'Both' ? 2 : 1) : 0;
+        const dailyCount = todayMeal ? (todayMeal.meal === 'Both' ? 2 : 1) : 0;
 
         res.json({
             totalMealCount: user.totalMealCount,
-            mealStatus: todayMeal ? todayMeal.meal : 'Off',
-            dailyMealCount: dailyMealCount
+            todayMealStatus: todayMeal ? todayMeal.meal : 'Off',
+            dailyCount
         });
     } catch (error) {
         console.error("Error fetching meal status:", error);
@@ -245,7 +248,7 @@ app.get('/get-meal-status', async (req, res) => {
     }
 });
 
-// Starting the server
+// Start the server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
