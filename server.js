@@ -5,21 +5,24 @@ const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const path = require('path');
 const ExcelJS = require('exceljs');
-require('dotenv').config(); // Load environment variables
 
 const app = express();
 const PORT = process.env.PORT || 3000; // Use Render's PORT or default to 3000
 
+// MongoDB connection URI
+const MONGODB_URI = 'mongodb+srv://askpeal121:Peal1234@cluster0.teofx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'; // Replace with your actual MongoDB connection string
+
 // Connect to MongoDB
 async function connectDB() {
     try {
-        await mongoose.connect(process.env.MONGODB_URI, {
+        await mongoose.connect(MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
         console.log("MongoDB Connected!");
     } catch (err) {
         console.error("MongoDB connection error:", err);
+        process.exit(1); // Exit process on error
     }
 }
 
@@ -30,7 +33,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static('public'));
 app.use(session({
-    secret: process.env.SESSION_SECRET,
+    secret: 'your-strong-session-secret', // Replace with a strong, secure secret
     resave: false,
     saveUninitialized: false,
 }));
@@ -121,14 +124,14 @@ app.post('/meal-update', async (req, res) => {
         // Determine meal counts based on user input
         if (meal === 'Off') {
             // Reset meal counts for 'Off'
-            currentUser.totalMealCount -= mealHistoryEntry ? (mealHistoryEntry.meal === 'Both' ? 2 : 1) : 0; // Adjust total count
             if (mealHistoryEntry) {
+                currentUser.totalMealCount -= (mealHistoryEntry.meal === 'Both' ? 2 : 1); // Adjust total count
                 await MealHistory.deleteOne({ _id: mealHistoryEntry._id }); // Remove entry if 'Off'
             }
         } else {
             if (mealHistoryEntry) {
                 // Update existing entry for today
-                currentUser.totalMealCount -= mealHistoryEntry.meal === 'Both' ? 2 : 1; // Adjust total count
+                currentUser.totalMealCount -= (mealHistoryEntry.meal === 'Both' ? 2 : 1); // Adjust total count
                 mealHistoryEntry.meal = meal; // Update meal status
                 await mealHistoryEntry.save();
             } else {
@@ -138,7 +141,7 @@ app.post('/meal-update', async (req, res) => {
             }
 
             // Increase total meal count based on the selection
-            currentUser.totalMealCount += meal === 'Both' ? 2 : 1; // Count meals
+            currentUser.totalMealCount += (meal === 'Both' ? 2 : 1); // Count meals
         }
 
         // Save user
@@ -229,23 +232,23 @@ app.get('/get-meal-status', async (req, res) => {
     today.setHours(0, 0, 0, 0); // Set time to midnight for today
 
     try {
-        const user = await User.findById(req.session.userId);
-        const todayMeal = await MealHistory.findOne({
-            userId: user._id,
-            date: today
-        });
-
-        const dailyCount = todayMeal ? (todayMeal.meal === 'Both' ? 2 : 1) : 0;
+        const currentUser = await User.findById(req.session.userId);
+        const todayMeal = await MealHistory.findOne({ userId: currentUser._id, date: today });
 
         res.json({
-            totalMealCount: user.totalMealCount,
-            todayMealStatus: todayMeal ? todayMeal.meal : 'Off',
-            dailyCount
+            totalMealCount: currentUser.totalMealCount,
+            todayMeal: todayMeal ? todayMeal.meal : 'Off'
         });
     } catch (error) {
-        console.error("Error fetching meal status:", error);
-        res.status(500).send('Error fetching meal status. Please try again.');
+        console.error("Error getting meal status:", error);
+        res.status(500).send('Could not retrieve meal status');
     }
+});
+
+// Logout route
+app.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/login');
 });
 
 // Start the server
