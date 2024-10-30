@@ -4,75 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meal Update</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="styles.css"> <!-- External CSS for styling -->
+    <script src="script.js" defer></script> <!-- External JS for functionality -->
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
             margin: 0;
             padding: 20px;
-            animation: fadeIn 0.5s;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        h1 {
+            text-align: center;
+            color: #333;
         }
 
         .container {
             max-width: 600px;
             margin: auto;
-            background: #fff;
+            background: white;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
-        h2, .user-name, .date-time {
-            text-align: center;
-            color: #333;
-        }
-
-        .user-name {
-            font-size: 1.2em;
-            margin-bottom: 10px;
-            color: #666;
-        }
-
-        .date-time {
-            font-size: 1em;
-            color: #888;
-            margin-bottom: 20px;
-        }
-
-        label {
-            font-weight: bold;
+        .meal-option {
             margin: 10px 0;
-            display: block;
         }
 
-        select, button {
+        .button {
+            display: block;
             width: 100%;
             padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        button {
+            margin: 10px 0;
             background-color: #28a745;
             color: white;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s ease;
         }
 
-        button:hover {
+        .button:hover {
             background-color: #218838;
-        }
-
-        .meal-count {
-            margin: 20px 0;
-            text-align: center;
         }
 
         .export-button {
@@ -80,12 +54,15 @@
         }
 
         .export-button:hover {
-            background-color: #0056b3;
+            background-color: #0069d9;
+        }
+
+        .additional-options {
+            margin: 10px 0;
         }
 
         .logout-button {
-            background-color: #dc3545;
-            margin-top: 20px;
+            background-color: #dc3545; /* Red color for logout */
         }
 
         .logout-button:hover {
@@ -94,119 +71,91 @@
     </style>
 </head>
 <body>
+
     <div class="container">
-        <!-- User's name -->
-        <div class="user-name">Welcome </div>
+        <h1>Meal Update</h1>
 
-        <!-- Date and Time Display -->
-        <div class="date-time" id="dateTime"></div>
+        <form id="mealForm">
+            <div class="meal-option">
+                <label for="meal">Select Meal:</label><br>
+                <select id="meal" name="meal" required>
+                    <option value="">--Choose an option--</option>
+                    <option value="Lunch">Lunch</option>
+                    <option value="Dinner">Dinner</option>
+                    <option value="Both">Both</option>
+                    <option value="Off">Off</option>
+                </select>
+            </div>
 
-        <h2>Update Your Meal</h2>
+            <div class="additional-options">
+                <label>Additional Items:</label><br>
+                <input type="checkbox" id="mutton" name="additionalItems" value="Mutton">
+                <label for="Mutton">Mutton</label><br>
+                <input type="checkbox" id="egg" name="additionalItems" value="Egg">
+                <label for="egg">Egg instead of fish</label><br>
+                <input type="checkbox" id="off" name="additionalItems" value="Off">
+                <label for="off">Egg instead of poultry</label><br>
+            </div>
 
-        <div>
-            <label for="mealSelection">Select Your Meal:</label>
-            <select id="mealSelection">
-                <option value="Lunch">Lunch</option>
-                <option value="Dinner">Dinner</option>
-                <option value="Both">Both</option>
-                <option value="Off">Off</option>
-            </select>
-            <button onclick="updateMeal()">Update Meal</button>
-        </div>
+            <button type="button" class="button" onclick="updateMeal()">Update Meal</button>
+        </form>
 
-        <div class="meal-count">
-            <h3>Current Meal Status</h3>
-            <p>Daily Meal Count: <span id="dailyCount">0</span></p>
-            <p>Total Meal Count: <span id="totalCount">0</span></p>
-        </div>
-
-        <button class="export-button" onclick="exportToExcel()">Download Meal List</button>
+        <button class="button export-button" onclick="exportToExcel()">Export Meal Update to Excel</button>
         
-        <!-- Logout Button -->
-        <button class="logout-button" onclick="logout()">Logout</button>
+        <button class="button logout-button" onclick="logout()">Logout</button>
     </div>
 
     <script>
-        // Display the user's name
-        const userName = "Alshariear Khan Peal";
-        document.getElementById('userName').textContent = userName;
-
-        // Function to update date and time
-        function updateDateTime() {
-            const now = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-            document.getElementById('dateTime').textContent = now.toLocaleDateString("en-US", options);
-        }
-        setInterval(updateDateTime, 1000); // Update every second
-
-        async function loadMealData() {
-            try {
-                const response = await fetch('/get-meal-status');
-                const data = await response.json();
-                document.getElementById('dailyCount').textContent = data.dailyMealCount || 0;
-                document.getElementById('totalCount').textContent = data.totalMealCount || 0;
-            } catch (error) {
-                console.error('Error loading meal data:', error);
-            }
-        }
-
-        async function updateMeal() {
-            const meal = document.getElementById('mealSelection').value;
-            try {
-                const response = await fetch('/meal-update', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ meal })
-                });
-                if (response.ok) {
-                    await loadMealData();
-                    alert('Meal updated successfully');
-                } else {
-                    alert('Error updating meal');
-                }
-            } catch (error) {
-                console.error('Error updating meal:', error);
-                alert('Error updating meal');
-            }
-        }
-
+        // Function to export meal update to Excel
         async function exportToExcel() {
             try {
                 const response = await fetch('/export-excel');
-                if (!response.ok) throw new Error('Error downloading Excel file');
-                
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = 'meal_update_list.xlsx';
+                a.download = 'meal-update-list.xlsx';
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
-                alert('Excel file downloaded successfully');
+                alert('Excel file downloaded! Don’t forget to thank Peal!');
             } catch (error) {
                 console.error('Error exporting to Excel:', error);
-                alert('Error exporting to Excel');
             }
         }
 
-        function logout() {
-            alert("Don't forget to thank Peal!");
-            window.location.href = "/"; // Redirect to main page
+        // Function to update meal
+        async function updateMeal() {
+            const formData = new FormData(document.getElementById('mealForm'));
+            const mealData = {
+                meal: formData.get('meal'),
+                additionalItems: formData.getAll('additionalItems')
+            };
+
+            try {
+                const response = await fetch('/meal-update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(mealData)
+                });
+
+                if (response.ok) {
+                    alert('Done. Don’t forget to thank Peal!');
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.message);
+                }
+            } catch (error) {
+                console.error('Error updating meal:', error);
+            }
         }
 
-        // Load meal data on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadMealData();
-            updateDateTime(); // Initial call to display time immediately
-        });
+        // Logout function
+        function logout() {
+            alert("Don’t forget to thank Peal!");
+            window.location.href = '/';
+        }
     </script>
-
-<footer>
-    Developed by Al shariear Khan Peal
-</footer>
 </body>
 </html>

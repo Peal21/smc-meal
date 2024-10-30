@@ -6,26 +6,23 @@ const session = require('express-session');
 const path = require('path');
 const ExcelJS = require('exceljs');
 
+// Initialize app and set port
 const app = express();
-const PORT = process.env.PORT || 3000; // Use Render's PORT or default to 3000
+const PORT = process.env.PORT || 3000;
 
 // MongoDB connection URI
-const MONGODB_URI = 'mongodb+srv://askpeal121:Peal1234@cluster0.teofx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'; // Replace with your actual MongoDB connection string
+const MONGODB_URI = 'mongodb+srv://askpeal121:Peal1234@cluster0.teofx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
 // Connect to MongoDB
 async function connectDB() {
     try {
-        await mongoose.connect(MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
+        await mongoose.connect(MONGODB_URI);
         console.log("MongoDB Connected!");
     } catch (err) {
         console.error("MongoDB connection error:", err);
-        process.exit(1); // Exit process on error
+        process.exit(1);
     }
 }
-
 connectDB(); // Call the connection function
 
 // Middleware
@@ -33,12 +30,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static('public'));
 app.use(session({
-    secret: 'your-strong-session-secret', // Replace with a strong, secure secret
+    secret: 'your-strong-session-secret',
     resave: false,
     saveUninitialized: false,
 }));
 
-// User Schema
+// Define User schema and model
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     classRoll: { type: Number, required: true, unique: true },
@@ -47,15 +44,15 @@ const userSchema = new mongoose.Schema({
     role: { type: String, required: true },
     totalMealCount: { type: Number, default: 0 }
 });
+const User = mongoose.model('User', userSchema);
 
-// Meal History Schema
+// Define MealHistory schema and model
 const mealHistorySchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     date: { type: Date, required: true },
-    meal: { type: String, required: true }
+    meal: { type: String, required: true },
+    additionalItems: { type: [String], default: [] } // Field for additional items
 });
-
-const User = mongoose.model('User', userSchema);
 const MealHistory = mongoose.model('MealHistory', mealHistorySchema);
 
 // Routes
@@ -107,58 +104,47 @@ app.get('/meal-update', (req, res) => {
 
 // Handle meal update submissions
 app.post('/meal-update', async (req, res) => {
-    if (!req.session.userId) {
-        return res.status(401).send('You need to log in to update meals');
-    }
+    if (!req.session.userId) return res.status(401).send('You need to log in to update meals');
 
-    const { meal } = req.body;
+    const { meal, additionalItems } = req.body; // Capture additionalItems
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to midnight for date comparison
 
     try {
         const currentUser = await User.findById(req.session.userId);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Set time to midnight for today
-
-        // Check if meal history for today exists
         let mealHistoryEntry = await MealHistory.findOne({ userId: currentUser._id, date: today });
 
-        // Determine meal counts based on user input
-        if (meal === 'Off') {
-            // Reset meal counts for 'Off'
-            if (mealHistoryEntry) {
-                currentUser.totalMealCount -= (mealHistoryEntry.meal === 'Both' ? 2 : 1); // Adjust total count
-                await MealHistory.deleteOne({ _id: mealHistoryEntry._id }); // Remove entry if 'Off'
-            }
+        if (mealHistoryEntry) {
+            // If an entry already exists for today, update it
+            currentUser.totalMealCount -= (mealHistoryEntry.meal === 'Both' ? 2 : 1);
+            mealHistoryEntry.meal = meal;
+            mealHistoryEntry.additionalItems = additionalItems; // Save additional items
+            await mealHistoryEntry.save();
+            currentUser.totalMealCount += (meal === 'Both' ? 2 : 1);
         } else {
-            if (mealHistoryEntry) {
-                // Update existing entry for today
-                currentUser.totalMealCount -= (mealHistoryEntry.meal === 'Both' ? 2 : 1); // Adjust total count
-                mealHistoryEntry.meal = meal; // Update meal status
-                await mealHistoryEntry.save();
-            } else {
-                // Create new meal history entry
-                mealHistoryEntry = new MealHistory({ userId: currentUser._id, date: today, meal });
-                await mealHistoryEntry.save();
-            }
-
-            // Increase total meal count based on the selection
-            currentUser.totalMealCount += (meal === 'Both' ? 2 : 1); // Count meals
+            // No entry for today, create a new one
+            mealHistoryEntry = new MealHistory({
+                userId: currentUser._id,
+                date: today,
+                meal,
+                additionalItems
+            });
+            await mealHistoryEntry.save();
+            currentUser.totalMealCount += (meal === 'Both' ? 2 : 1);
         }
 
-        // Save user
         await currentUser.save();
-        return res.send('Meal updated successfully');
+        res.send('Meal updated successfully');
     } catch (error) {
         console.error("Error updating meal:", error);
-        return res.status(500).send('Error updating meal. Please try again.');
+        res.status(500).send('Error updating meal. Please try again.');
     }
 });
 
-// Export meal update list to Excel
 app.get('/export-excel', async (req, res) => {
     try {
         const users = await User.find().sort({ classRoll: 1 });
         const mealHistory = await MealHistory.find();
-
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Meal Update List');
 
@@ -166,22 +152,27 @@ app.get('/export-excel', async (req, res) => {
             { header: 'Class Roll', key: 'classRoll', width: 15 },
             { header: 'Name', key: 'name', width: 25 },
             { header: 'Meal Status', key: 'meal', width: 15 },
+            { header: 'Mutton', key: 'mutton', width: 15 },
+            { header: 'Egg insted of fish', key: 'egg', width: 15 },
+            { header: 'Egg instead of poultry', key: 'off', width: 15 },
             { header: 'Daily Count', key: 'dailyCount', width: 15 },
             { header: 'Total Count', key: 'totalCount', width: 15 }
         ];
 
         let totalDailyMeals = 0;
         let grandTotalMeals = 0;
+        let totalMutton = 0;
+        let totalEgg = 0;
+        let totalOff = 0;
 
         users.forEach(user => {
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Set time to midnight for today
+            today.setHours(0, 0, 0, 0);
             const todayMeal = mealHistory.find(history =>
                 history.userId.toString() === user._id.toString() &&
                 new Date(history.date).toDateString() === today.toDateString()
             );
 
-            // Calculate daily count and add to totals
             const dailyCount = todayMeal ? (todayMeal.meal === 'Both' ? 2 : 1) : 0;
             totalDailyMeals += dailyCount;
             grandTotalMeals += user.totalMealCount;
@@ -190,68 +181,86 @@ app.get('/export-excel', async (req, res) => {
                 classRoll: user.classRoll,
                 name: user.name,
                 meal: todayMeal ? todayMeal.meal : 'Off',
+                mutton: todayMeal && todayMeal.additionalItems.includes('Mutton') ? 1 : 0,
+                egg: todayMeal && todayMeal.additionalItems.includes('Egg') ? 1 : 0,
+                off: todayMeal && todayMeal.additionalItems.includes('Off') ? 1 : 0,
                 dailyCount: dailyCount,
                 totalCount: user.totalMealCount
             });
 
-            // Apply color based on meal status
-            if (!todayMeal) {
-                row.getCell('meal').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } }; // Red for 'Off'
-            } else if (todayMeal.meal === 'Both') {
-                row.getCell('meal').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00FF00' } }; // Green for 'Both'
+            // Color meal options
+            if (todayMeal) {
+                if (todayMeal.meal === 'Lunch') {
+                    row.getCell('meal').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFADD8E6' } }; // Light Blue
+                } else if (todayMeal.meal === 'Dinner') {
+                    row.getCell('meal').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFA500' } }; // Orange
+                } else if (todayMeal.meal === 'Both') {
+                    row.getCell('meal').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00FF00' } }; // Green
+                }
+            } else {
+                row.getCell('meal').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } }; // Red for Off
+            }
+
+            // Color additional items
+            if (todayMeal) {
+                if (todayMeal.additionalItems.includes('Mutton')) {
+                    row.getCell('mutton').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC0CB' } }; // Pink
+                    totalMutton++;
+                }
+                if (todayMeal.additionalItems.includes('Egg')) {
+                    row.getCell('egg').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } }; // Yellow
+                    totalEgg++;
+                }
+                if (todayMeal.additionalItems.includes('Off')) {
+                    row.getCell('off').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEE82EE' } }; // Violet
+                    totalOff++;
+                }
             }
         });
 
-        // Add totals at the bottom
+        // Total summary row
         const totalRow = worksheet.addRow({
-            name: 'Total',
+            classRoll: 'Total',
+            name: '',
+            meal: '',
+            mutton: totalMutton,
+            egg: totalEgg,
+            off: totalOff,
             dailyCount: totalDailyMeals,
             totalCount: grandTotalMeals
         });
-        totalRow.font = { bold: true };
 
-        // Save the file with today's date
-        const todayDate = new Date().toISOString().split('T')[0];
-        const fileName = `meal_update_list_${todayDate}.xlsx`;
+        // Style total summary row
+        if (totalRow) {
+            totalRow.eachCell(cell => {
+                cell.font = { bold: true };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCCCCC' } }; // Gray for summary
+            });
+        }
 
+        // Set headers for file download
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+        res.setHeader('Content-Disposition', 'attachment; filename="meal_update_list.xlsx"');
+
+        // Write workbook to response
         await workbook.xlsx.write(res);
         res.end();
     } catch (error) {
         console.error("Error exporting to Excel:", error);
-        res.status(500).send("Could not export to Excel");
+        res.status(500).send('Error exporting to Excel');
     }
 });
 
-// Route to get today's meal status and total meal count for the user
-app.get('/get-meal-status', async (req, res) => {
-    if (!req.session.userId) return res.status(401).send('You need to log in');
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set time to midnight for today
-
-    try {
-        const currentUser = await User.findById(req.session.userId);
-        const todayMeal = await MealHistory.findOne({ userId: currentUser._id, date: today });
-
-        res.json({
-            totalMealCount: currentUser.totalMealCount,
-            todayMeal: todayMeal ? todayMeal.meal : 'Off'
-        });
-    } catch (error) {
-        console.error("Error getting meal status:", error);
-        res.status(500).send('Could not retrieve meal status');
-    }
-});
 
 // Logout route
-app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/login');
+app.post('/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) return res.status(500).send('Error logging out');
+        res.redirect('/index.html'); // Redirect to the main index page after logout
+    });
 });
-
-// Start the server
+// Start server
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
