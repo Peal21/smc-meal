@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for smc-meal-management on 2024-10-30T19:35:22+06:00
+# fly.toml app configuration file generated for smc-meal on 2025-06-21T10:23:53Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'smc-meal-management'
+app = 'smc-meal'
 primary_region = 'sin'
 
 [build]
@@ -20,3 +20,4 @@ primary_region = 'sin'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
+  memory_mb = 1024
