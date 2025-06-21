@@ -55,25 +55,40 @@
             margin-top: 20px;
             color: #777;
         }
+        .error {
+            color: red;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Sign Up</h2>
-        <form action="/signup" method="POST">
-            <input type="text" name="name" placeholder="Name" required>
-            <input type="number" name="classRoll" placeholder="Class Roll" required>
-            <input type="email" name="email" placeholder="Email" required>
-            <input type="password" name="password" placeholder="Password" required>
-            
-            
-            <select name="gender" required>
+        <form action="/signup" method="POST" id="signupForm">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" placeholder="Name" required>
+
+            <label for="classRoll">Class Roll</label>
+            <input type="number" id="classRoll" name="classRoll" placeholder="Class Roll" min="1" max="100" required>
+
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="Email" required>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Password" minlength="6" required>
+
+            <label for="gender">Gender</label>
+            <select id="gender" name="gender" required>
                 <option value="">Select Gender</option>
-                <option value="Boys">Boys</option>
-                <option value="Girls">Girls</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
             </select>
-            
-            <select name="batch" required>
+            <p class="error" id="genderError">Please select a valid gender (Male or Female).</p>
+
+            <label for="batch">Batch</label>
+            <select id="batch" name="batch" required>
                 <option value="">Select Batch</option>
                 <option value="09">09</option>
                 <option value="10">10</option>
@@ -81,14 +96,27 @@
                 <option value="12">12</option>
                 <option value="13">13</option>
             </select>
-            
+
             <button type="submit">Sign Up</button>
         </form>
-       
         <p>Already have an account? <a href="/login.html">Log in here</a>.</p>
         <div class="footer">
             <p class="footer-text">Developed by Al Shariear Khan Peal</p>
         </div>
     </div>
+
+    <script>
+        // Client-side validation for gender
+        document.getElementById('signupForm').addEventListener('submit', function(event) {
+            const gender = document.getElementById('gender').value;
+            const genderError = document.getElementById('genderError');
+            if (gender !== 'Male' && gender !== 'Female') {
+                event.preventDefault();
+                genderError.style.display = 'block';
+            } else {
+                genderError.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>

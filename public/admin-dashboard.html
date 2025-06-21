@@ -1,0 +1,78 @@
+<label for="genderSelect">Select Gender:</label>
+<select id="genderSelect">
+  <option value="boy">Boys</option>
+  <option value="girl">Girls</option>
+</select>
+
+<table id="usersTable" style="margin-top: 20px;">
+  <thead>
+    <tr>
+      <th>Batch</th>
+      <th>Class Roll</th>
+      <th>Name</th>
+      <th>Deposit</th>
+      <th>Total Meal Count</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- User rows will be inserted here -->
+  </tbody>
+</table>
+
+<script>
+  const genderSelect = document.getElementById('genderSelect');
+  const usersTableBody = document.querySelector('#usersTable tbody');
+
+  async function loadUsers(gender) {
+    try {
+      const res = await fetch(`/admin/view/${gender}`);
+      if (!res.ok) throw new Error('Failed to fetch users');
+      const users = await res.json();
+
+      usersTableBody.innerHTML = '';
+
+      users.forEach(user => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${user.batch}</td>
+          <td>${user.classRoll}</td>
+          <td>${user.name}</td>
+          <td>${user.deposit}</td>
+          <td>${user.totalMealCount}</td>
+          <td>
+            <button onclick="addDeposit('${user._id}')">Add Deposit</button>
+          </td>
+        `;
+        usersTableBody.appendChild(tr);
+      });
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  genderSelect.addEventListener('change', () => {
+    loadUsers(genderSelect.value);
+  });
+
+  function addDeposit(userId) {
+    const amount = prompt('Enter amount to add:');
+    if (!amount || isNaN(amount)) return alert('Invalid amount');
+
+    fetch(`/api/students/${userId}/add-deposit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: Number(amount) }),
+    }).then(res => {
+      if (res.ok) {
+        alert('Deposit updated');
+        loadUsers(genderSelect.value);
+      } else {
+        res.json().then(data => alert(data.error || 'Failed to update deposit'));
+      }
+    });
+  }
+
+  // Initial load
+  loadUsers(genderSelect.value);
+</script>

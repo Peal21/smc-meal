@@ -1,109 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Satkhira Medical College Boys Hall</title>
-    <link rel="stylesheet" href="styles.css"> <!-- Link to external CSS -->
-    <style>
-        body {
-            background-color: #f0f8ff;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
-        
-        header {
-            background-color: #003366;
-            color: white;
-            width: 100%;
-            padding: 20px 0;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satkhira Medical College Boys Hall</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      background-color: #f0f8ff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
 
-        h1 {
-            margin: 0;
-            font-size: 2.5em;
-        }
+    header {
+      background-color: #003366;
+      color: white;
+      width: 100%;
+      padding: 20px 0;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    }
 
-        .batch-name {
-            font-size: 1.5em;
-            margin-top: 10px;
-        }
+    h1 {
+      margin: 0;
+      font-size: 2.5em;
+    }
 
-        .logo-container {
-            margin: 30px 0;
-        }
+    .batch-name {
+      font-size: 1.5em;
+      margin-top: 10px;
+    }
 
-        .logo {
-            max-width: 200px;
-            width: 100%;
-            border-radius: 8px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-        }
+    .logo-container {
+      margin: 30px 0;
+    }
 
-        .buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin: 30px 0;
-        }
+    .logo {
+      max-width: 200px;
+      width: 100%;
+      border-radius: 8px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    }
 
-        .btn {
-            display: inline-block;
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px 25px;
-            width: 180px;
-            margin: 0 auto;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            font-size: 1em;
-            transition: background-color 0.3s, transform 0.3s;
-        }
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin: 30px 0;
+    }
 
-        .btn:hover {
-            background-color: #45a049;
-            transform: scale(1.05);
-        }
+    .btn {
+      display: inline-block;
+      background-color: #4CAF50;
+      color: white;
+      padding: 15px 25px;
+      width: 180px;
+      margin: 0 auto;
+      border: none;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 1em;
+      transition: background-color 0.3s, transform 0.3s;
+    }
 
-        footer {
-            margin-top: 30px;
-            font-size: 0.9em;
-            color: #333;
-            width: 100%;
-            text-align: center;
-            padding: 15px 0;
-            background-color: #f4f4f4;
-            box-shadow: 0px -2px 5px rgba(0, 0, 0, 0.1);
-        }
-    </style>
+    .btn:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+
+    .btn-admin {
+      background-color: #FF5722;
+    }
+
+    .btn-admin:hover {
+      background-color: #E64A19;
+    }
+
+    .btn-staff {
+      background-color: #8B5CF6;
+    }
+
+    .btn-staff:hover {
+      background-color: #7C3AED;
+    }
+
+    footer {
+      margin-top: 30px;
+      font-size: 0.9em;
+      color: #333;
+      width: 100%;
+      text-align: center;
+      padding: 15px 0;
+      background-color: #f4f4f4;
+      box-shadow: 0px -2px 5px rgba(0, 0, 0, 0.1);
+    }
+  </style>
 </head>
 <body>
 
 <header>
-    <h1>Satkhira Medical College Boys Hall</h1>
-    <div class="batch-name">Batch: SMC 13</div>
+  <h1>Satkhira Medical College Boys Hall</h1>
+  <div class="batch-name">Batch: SMC 13</div>
 </header>
 
 <div class="container">
-    <div class="logo-container">
-        <img src="images/logo.png" alt="Logo" class="logo">
-    </div>
-    <div class="buttons">
-        <a href="signup.html" class="btn">Sign Up</a>
-        <a href="login.html" class="btn">Login</a>
-    </div>
+  <div class="logo-container">
+    <img src="images/logo.png" alt="Logo" class="logo">
+  </div>
+  <div class="buttons">
+    <a href="signup.html" class="btn">Sign Up</a>
+    <a href="login.html" class="btn">Login</a>
+    <a href="admin-login.html" class="btn btn-admin">Admin Login</a>
+    <a href="staff-login.html" class="btn btn-staff">Staff Login</a>
+  </div>
 </div>
 
 <footer>
-    Developed by Al Shariear Khan Peal
+  Developed by Al Shariear Khan Peal
 </footer>
 
 </body>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Panel - Boys</title>
+  <style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background: #f2f2f2; }
+    input.deposit-input { width: 80px; }
+  </style>
+</head>
+<body>
+  <h1>Boys - Batch: <span id="batchDisplay"></span></h1>
+
+  <label for="batchSelect">Select Batch:</label>
+  <select id="batchSelect">
+    <option value="09">09</option>
+    <option value="10">10</option>
+    <option value="11">11</option>
+    <option value="12">12</option>
+    <option value="13">13</option>
+  </select>
+
+  <table id="usersTable">
+    <thead>
+      <tr>
+        <th>Roll</th>
+        <th>Name</th>
+        <th>Total Meals</th>
+        <th>Deposit Amount</th>
+        <th>Update Deposit</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const gender = 'Male';
+    const batchSelect = document.getElementById('batchSelect');
+    const batchDisplay = document.getElementById('batchDisplay');
+    const usersTableBody = document.querySelector('#usersTable tbody');
+
+    async function loadUsers(batch) {
+      batchDisplay.textContent = batch;
+      const response = await fetch(`/admin/api/users?gender=${gender}&batch=${batch}`);
+      const users = await response.json();
+
+      usersTableBody.innerHTML = '';
+
+      users.forEach(user => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>${user.classRoll}</td>
+          <td>${user.name}</td>
+          <td>${user.totalMealCount}</td>
+          <td><input type="number" class="deposit-input" value="${user.depositAmount || 0}" data-userid="${user._id}"></td>
+          <td><button onclick="updateDeposit(this)">Update</button></td>
+        `;
+
+        usersTableBody.appendChild(tr);
+      });
+    }
+
+    async function updateDeposit(button) {
+      const input = button.parentElement.previousElementSibling.querySelector('.deposit-input');
+      const userId = input.getAttribute('data-userid');
+      const depositAmount = parseFloat(input.value);
+
+      if (isNaN(depositAmount)) {
+        alert('Invalid deposit amount');
+        return;
+      }
+
+      const res = await fetch('/admin/api/update-deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, depositAmount })
+      });
+
+      if (res.ok) {
+        alert('Deposit updated');
+      } else {
+        alert('Error updating deposit');
+      }
+    }
+
+    batchSelect.addEventListener('change', () => {
+      loadUsers(batchSelect.value);
+    });
+
+    // Initial load
+    loadUsers(batchSelect.value);
+  </script>
+</body>
+</html>

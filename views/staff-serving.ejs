@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Serving - Satkhira Medical College</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.4.0/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+            margin: 0;
+            overflow-x: hidden;
+        }
+        .header {
+            background: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: slideDown 0.5s ease-out;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        .btn {
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, background-color 0.3s ease;
+            border-radius: 8px;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.4);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            transform: scale(0);
+            top: 50%;
+            left: 50%;
+            margin: -50px 0 0 -50px;
+            transition: transform 0.4s ease;
+        }
+        .btn:active::after {
+            transform: scale(2);
+            transition: 0s;
+        }
+        .btn-green {
+            background: linear-gradient(45deg, #4caf50, #66bb6a);
+            color: white;
+        }
+        .btn-green:hover {
+            background: linear-gradient(45deg, #43a047, #4caf50);
+        }
+        .btn-blue {
+            background: linear-gradient(45deg, #2196f3, #42a5f5);
+            color: white;
+        }
+        .btn-blue:hover {
+            background: linear-gradient(45deg, #1e88e5, #2196f3);
+        }
+        .btn-disabled {
+            background: #e0e0e0;
+            color: #9e9e9e;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .select, .date-input, .search-input {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fafafa;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .select:focus, .date-input:focus, .search-input:focus {
+            border-color: #2196f3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+            outline: none;
+        }
+        .table-container {
+            max-height: 600px;
+            overflow-y: auto;
+            border-radius: 12px;
+            background: #ffffff;
+        }
+        .table th {
+            background: #f5f5f5;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            padding: 16px;
+            font-weight: 600;
+            color: #424242;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .table tr {
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .table tr:hover {
+            background: #f9f9f9;
+            transform: translateX(4px);
+        }
+        .error {
+            color: #d32f2f;
+            font-size: 0.9rem;
+            animation: shake 0.3s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+        .extra-meal {
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+        .extra-meal.show {
+            display: block;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .meal-off {
+            color: #d32f2f;
+            font-weight: 600;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .off-users-list {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            background: #fafafa;
+        }
+        .search-container {
+            position: relative;
+        }
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 30;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: popIn 0.3s ease-out;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .search-result-item {
+            padding: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        .search-result-item:hover {
+            background: #f3f3f3;
+            transform: translateX(4px);
+        }
+        @media (max-width: 768px) {
+            .filters {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .table-container {
+                overflow-x: auto;
+            }
+            .table {
+                min-width: 800px;
+            }
+            .card {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sound Effects -->
+    <audio id="clickSound" src="/sounds/button-click.mp3"></audio>
+    <audio id="successSound" src="/sounds/success.mp3"></audio>
+    <audio id="popSound" src="/sounds/pop.mp3"></audio>
+    <audio id="errorSound" src="/sounds/error.mp3"></audio>
+
+    <!-- Header -->
+    <header class="header py-4">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="material-icons text-3xl text-blue-600 animate-spin-slow">restaurant_menu</span>
+                <h1 class="text-2xl font-semibold text-gray-800">Satkhira Medical College Staff Serving</h1>
+            </div>
+            <a href="/logout" class="btn bg-red-500 text-white px-5 py-2 rounded-md text-sm hover:bg-red-600" onclick="playSound('clickSound')">Logout</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Filters -->
+        <div class="card p-6 mb-8 animate-card">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <span class="material-icons mr-2">filter_list</span> Filter Users
+            </h2>
+            <form class="filters flex flex-wrap gap-4" action="/staff/serving" method="GET">
+                <div class="flex-1 min-w-[160px]">
+                    <select name="batch" class="select w-full">
+                        <option value="all">All Batches</option>
+                        <% batches.forEach(batch => { %>
+                            <option value="<%= batch %>" <%= selectedBatch === batch ? 'selected' : '' %>><%= batch %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[160px]">
+                    <select name="gender" class="select w-full">
+                        <option value="all">All Genders</option>
+                        <% genders.forEach(gender => { %>
+                            <option value="<%= gender %>" <%= selectedGender === gender ? 'selected' : '' %>><%= gender %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[160px]">
+                    <input type="date" name="date" value="<%= selectedDate %>" class="date-input w-full" required>
+                </div>
+                <button type="submit" class="btn btn-blue px-5 py-2 rounded-md flex items-center" onclick="playSound('clickSound')">
+                    <span class="material-icons mr-2">search</span> Apply Filters
+                </button>
+            </form>
+        </div>
+
+        <!-- Extra Meal Section -->
+        <div class="card p-6 mb-8 animate-card">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                    <span class="material-icons mr-2">add_circle</span> Enable Meals for Off Users
+                </h2>
+                <button onclick="toggleExtraMeal()" class="btn bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300" id="toggleExtraBtn">
+                    <span class="material-icons text-lg transition-transform duration-300">expand_more</span>
+                </button>
+            </div>
+            <div class="extra-meal" id="extraMealForm">
+                <p class="text-sm text-gray-600 mb-4">Users with 'Off' or partially 'Off' status: <span id="offUsersCount" class="font-semibold">0</span></p>
+                <div class="search-container mb-4">
+                    <input type="text" id="userSearch" class="search-input w-full" placeholder="Search by name..." oninput="searchUsers()">
+                    <div id="searchResults" class="search-results hidden"></div>
+                </div>
+                <div class="off-users-list mb-4" id="offUsersList"></div>
+                <div class="flex gap-4">
+                    <select id="extraMealType" class="select flex-1">
+                        <option value="Lunch">Lunch</option>
+                        <option value="Dinner">Dinner</option>
+                        <option value="Both">Both</option>
+                    </select>
+                    <button onclick="addExtraMeal('<%= selectedDate %>')" class="btn btn-blue px-5 py-2 rounded-md flex items-center" onclick="playSound('clickSound')">
+                        <span class="material-icons mr-2">add</span> Enable Extra Meal for All Off
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="card p-6 animate-card">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <span class="material-icons mr-2">dining</span> Serve Meals
+            </h2>
+            <div class="table-container">
+                <table class="table w-full text-sm text-gray-700">
+                    <thead>
+                        <tr>
+                            <th>Roll</th>
+                            <th>Name</th>
+                            <th>Additional Items</th>
+                            <th>Meal</th>
+                            <th>Lunch Served</th>
+                            <th>Dinner Served</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        <% users.forEach(user => { %>
+                            <% const mealHistory = mealHistories.find(mh => mh.userId.toString() === user._id.toString()); %>
+                            <tr class="animate-row">
+                                <td class="px-4 py-3"><%= user.classRoll %></td>
+                                <td class="px-4 py-3"><%= user.name %></td>
+                                <td class="px-4 py-3">
+                                    <%= mealHistory ? mealHistory.additionalItems.map(item => item === 'Off' ? 'Egg (Poultry)' : item).join(', ') || '-' : '-' %>
+                                </td>
+                                <td class="px-4 py-3 <%= mealHistory && mealHistory.meal === 'Off' ? 'meal-off' : '' %>">
+                                    <% if (mealHistory && mealHistory.meal === 'Off') { %>
+                                        <select onchange="updateMeal('<%= user._id %>', this.value, '<%= selectedDate %>')" class="select w-full meal-off">
+                                            <option value="Off" selected>Off</option>
+                                            <option value="Lunch">Lunch</option>
+                                            <option value="Dinner">Dinner</option>
+                                            <option value="Both">Both</option>
+                                        </select>
+                                    <% } else { %>
+                                        <%= mealHistory ? mealHistory.meal : 'Off' %>
+                                    <% } %>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <%= mealHistory && mealHistory.lunchServed ? 'Yes' : 'No' %>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <%= mealHistory && mealHistory.dinnerServed ? 'Yes' : 'No' %>
+                                </td>
+                                <td class="px-4 py-3 flex gap-2">
+                                    <% if (mealHistory && ['Lunch', 'Both'].includes(mealHistory.meal) && !mealHistory.lunchServed) { %>
+                                        <button onclick="serveMeal('<%= user._id %>', 'Lunch', '<%= selectedDate %>')" class="btn btn-green px-3 py-1 rounded-md text-xs">
+                                            Serve Lunch
+                                        </button>
+                                    <% } %>
+                                    <% if (mealHistory && ['Dinner', 'Both'].includes(mealHistory.meal) && !mealHistory.dinnerServed) { %>
+                                        <button onclick="serveMeal('<%= user._id %>', 'Dinner', '<%= selectedDate %>')" class="btn btn-blue px-3 py-1 rounded-md text-xs">
+                                            Serve Dinner
+                                        </button>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sound Effects
+        function playSound(soundId) {
+            const sound = document.getElementById(soundId);
+            sound.currentTime = 0;
+            sound.play().catch(err => console.error('Error playing sound:', err));
+        }
+
+        // Animations
+        anime({
+            targets: '.animate-card',
+            translateY: [50, 0],
+            opacity: [0, 1],
+            delay: anime.stagger(100),
+            duration: 800,
+            easing: 'easeOutQuad'
+        });
+
+        anime({
+            targets: '.animate-row',
+            translateX: [-20, 0],
+            opacity: [0, 1],
+            delay: anime.stagger(50),
+            duration: 600,
+            easing: 'easeOutQuad'
+        });
+
+        // Toggle Extra Meal Section
+        function toggleExtraMeal() {
+            const extraMealForm = document.getElementById('extraMealForm');
+            const toggleBtn = document.getElementById('toggleExtraBtn').querySelector('.material-icons');
+            extraMealForm.classList.toggle('show');
+            toggleBtn.style.transform = extraMealForm.classList.contains('show') ? 'rotate(180deg)' : 'rotate(0deg)';
+            if (extraMealForm.classList.contains('show')) {
+                fetchOffUsers();
+                anime({
+                    targets: '#extraMealForm',
+                    scale: [0.95, 1],
+                    opacity: [0, 1],
+                    duration: 500,
+                    easing: 'easeOutBounce'
+                });
+            }
+            playSound('clickSound');
+        }
+
+        // Fetch Off Users
+        async function fetchOffUsers() {
+            try {
+                const date = '<%= selectedDate %>';
+                const batch = document.querySelector('select[name="batch"]').value;
+                const gender = document.querySelector('select[name="gender"]').value;
+                const response = await axios.get('/api/meal/off-users', {
+                    params: { date, batch, gender }
+                });
+                const offUsers = response.data;
+                document.getElementById('offUsersCount').textContent = offUsers.length;
+                const offUsersList = document.getElementById('offUsersList');
+                offUsersList.innerHTML = offUsers.length ? offUsers.map(user => `
+                    <div class="flex justify-between items-center p-3 border-b border-gray-200 animate-pop">
+                        <span>${user.name} (Roll: ${user.classRoll}) - Off: ${user.offMeals.join(', ')}</span>
+                        <div class="flex gap-2">
+                            ${user.offMeals.includes('Lunch') ? `<button onclick="enableSpecificMeal('${user._id}', 'Lunch', '${date}')" class="btn btn-green px-3 py-1 rounded-md text-xs">Enable Lunch</button>` : ''}
+                            ${user.offMeals.includes('Dinner') ? `<button onclick="enableSpecificMeal('${user._id}', 'Dinner', '${date}')" class="btn btn-blue px-3 py-1 rounded-md text-xs">Enable Dinner</button>` : ''}
+                        </div>
+                    </div>
+                `).join('') : '<p class="text-gray-500 text-center">No off users found</p>';
+                anime({
+                    targets: '.animate-pop',
+                    scale: [0.9, 1],
+                    opacity: [0, 1],
+                    delay: anime.stagger(50),
+                    duration: 400,
+                    easing: 'easeOutQuad'
+                });
+            } catch (err) {
+                console.error('Error fetching off users:', err);
+                showError('Failed to fetch off users');
+                playSound('errorSound');
+            }
+        }
+
+        // Search Users
+        let offUsersCache = [];
+        async function searchUsers() {
+            const query = document.getElementById('userSearch').value.toLowerCase();
+            const searchResults = document.getElementById('searchResults');
+            if (query.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+            if (!offUsersCache.length) {
+                const date = '<%= selectedDate %>';
+                const batch = document.querySelector('select[name="batch"]').value;
+                const gender = document.querySelector('select=name="gender"]').value;
+                const response = await axios.get('/api/meal/off-users', {
+                    params: { date, batch, gender }
+                });
+                offUsersCache = response.data;
+            }
+            const filteredUsers = offUsersCache.filter(user => user.name.toLowerCase().includes(query));
+            searchResults.innerHTML = filteredUsers.length ? filteredUsers.map(user => `
+                <div class="search-result-item flex justify-between items-center" onclick="selectUser('${user._id}', '${user.name}', ['${user.offMeals.join("','")}'])">
+                    <span>${user.name} (Roll: ${user.classRoll})</span>
+                    <span class="text-sm text-gray-500">Off: ${user.offMeals.join(', ')}</span>
+                </div>
+            `).join('') : '<div class="search-result-item text-center text-gray-500">No users found</div>';
+            searchResults.classList.remove('hidden');
+            anime({
+                targets: '.search-result-item',
+                translateY: [-10, 0],
+                opacity: [0, 1],
+                delay: anime.stagger(50),
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+        }
+
+        // Select User from Search
+        function selectUser(userId, name, offMeals) {
+            playSound('popSound');
+            const offUsersList = document.getElementById('offUsersList');
+            offUsersList.innerHTML = `
+                <div class="flex justify-between items-center p-3 border-b border-gray-200 animate-pop">
+                    <span>${name} - Off: ${offMeals.join(', ')}</span>
+                    <div class="flex gap-2">
+                        ${offMeals.includes('Lunch') ? `<button onclick="enableSpecificMeal('${userId}', 'Lunch', '<%= selectedDate %>')" class="btn btn-green px-3 py-1 rounded-md text-xs">Enable Lunch</button>` : ''}
+                        ${offMeals.includes('Dinner') ? `<button onclick="enableSpecificMeal('${userId}', 'Dinner', '<%= selectedDate %>')" class="btn btn-blue px-3 py-1 rounded-md text-xs">Enable Dinner</button>` : ''}
+                    </div>
+                </div>
+            `;
+            document.getElementById('searchResults').classList.add('hidden');
+            document.getElementById('userSearch').value = '';
+            anime({
+                targets: '.animate-pop',
+                scale: [0.9, 1],
+                opacity: [0, 1],
+                duration: 400,
+                easing: 'easeOutQuad'
+            });
+        }
+
+        // Serve Meal
+        async function serveMeal(userId, mealType, date) {
+            playSound('clickSound');
+            try {
+                const response = await axios.post(`/api/meal/serve/${userId}`, { mealType, date });
+                const button = event.target;
+                button.classList.add('btn-disabled');
+                button.disabled = true;
+                button.textContent = `${mealType} Served`;
+                const row = button.closest('tr');
+                row.cells[mealType === 'Lunch' ? 4 : 5].textContent = 'Yes';
+                showSuccess(`${mealType} served successfully!`);
+                playSound('successSound');
+                anime({
+                    targets: row,
+                    backgroundColor: ['#e0f7fa', '#ffffff'],
+                    duration: 1000,
+                    easing: 'easeOutQuad'
+                });
+            } catch (err) {
+                console.error(`Error serving ${mealType}:`, err);
+                showError(`Failed to serve ${mealType}`);
+                playSound('errorSound');
+            }
+        }
+
+        // Update Meal Status
+        async function updateMeal(userId, meal, date) {
+            playSound('clickSound');
+            try {
+                const response = await axios.post('/api/meal/staff-update', { userId, meal, date });
+                const row = event.target.closest('tr');
+                row.cells[3].innerHTML = meal;
+                if (['Lunch', 'Both'].includes(meal) && !row.cells[4].textContent.includes('Yes')) {
+                    row.cells[6].innerHTML += `<button onclick="serveMeal('${userId}', 'Lunch', '${date}')" class="btn btn-green px-3 py-1 rounded-md text-xs">Serve Lunch</button>`;
+                }
+                if (['Dinner', 'Both'].includes(meal) && !row.cells[5].textContent.includes('Yes')) {
+                    row.cells[6].innerHTML += `<button onclick="serveMeal('${userId}', 'Dinner', '${date}')" class="btn btn-blue px-3 py-1 rounded-md text-xs">Serve Dinner</button>`;
+                }
+                showSuccess('Meal status updated successfully!');
+                playSound('successSound');
+                anime({
+                    targets: row,
+                    backgroundColor: ['#e0f7fa', '#ffffff'],
+                    duration: 1000,
+                    easing: 'easeOutQuad'
+                });
+                fetchOffUsers();
+            } catch (err) {
+                console.error('Error updating meal:', err);
+                showError('Failed to update meal status');
+                playSound('errorSound');
+            }
+        }
+
+        // Enable Specific Extra Meal
+        async function enableSpecificMeal(userId, mealType, date) {
+            playSound('clickSound');
+            try {
+                const response = await axios.post('/api/meal/extra-specific', { userId, mealType, date });
+                showSuccess(`${mealType} enabled for user!`);
+                playSound('successSound');
+                fetchOffUsers();
+                const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+                if (row) {
+                    row.cells[3].innerHTML = mealType === 'Lunch' && row.cells[3].textContent === 'Dinner' ? 'Both' :
+                                             mealType === 'Dinner' && row.cells[3].textContent === 'Lunch' ? 'Both' : mealType;
+                    row.cells[6].innerHTML += `<button onclick="serveMeal('${userId}', '${mealType}', '${date}')" class="btn ${mealType === 'Lunch' ? 'btn-green' : 'btn-blue'} px-3 py-1 rounded-md text-xs">Serve ${mealType}</button>`;
+                    anime({
+                        targets: row,
+                        backgroundColor: ['#e0f7fa', '#ffffff'],
+                        duration: 1000,
+                        easing: 'easeOutQuad'
+                    });
+                }
+            } catch (err) {
+                console.error(`Error enabling ${mealType}:`, err);
+                showError(`Failed to enable ${mealType}`);
+                playSound('errorSound');
+            }
+        }
+
+        // Enable Extra Meal for All Off
+        async function addExtraMeal(date) {
+            playSound('clickSound');
+            try {
+                const mealType = document.getElementById('extraMealType').value;
+                const response = await axios.post('/api/meal/extra', { date, mealType });
+                showSuccess(response.data.message);
+                playSound('successSound');
+                location.reload();
+            } catch (err) {
+                console.error('Error enabling extra meals:', err);
+                showError('Failed to enable extra meals');
+                playSound('errorSound');
+            }
+        }
+
+        // Show Success Message
+        function showSuccess(message) {
+            const div = document.createElement('div');
+            div.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg animate-slide-in';
+            div.textContent = message;
+            document.body.appendChild(div);
+            anime({
+                targets: div,
+                translateX: [50, 0],
+                opacity: [0, 1],
+                duration: 500,
+                easing: 'easeOutQuad'
+            });
+            setTimeout(() => {
+                anime({
+                    targets: div,
+                    translateX: [0, 50],
+                    opacity: [1, 0],
+                    duration: 500,
+                    easing: 'easeInQuad',
+                    complete: () => div.remove()
+                });
+            }, 3000);
+        }
+
+        // Show Error Message
+        function showError(message) {
+            const div = document.createElement('div');
+            div.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg animate-slide-in';
+            div.textContent = message;
+            document.body.appendChild(div);
+            anime({
+                targets: div,
+                translateX: [50, 0],
+                opacity: [0, 1],
+                duration: 500,
+                easing: 'easeOutQuad'
+            });
+            setTimeout(() => {
+                anime({
+                    targets: div,
+                    translateX: [0, 50],
+                    opacity: [1, 0],
+                    duration: 500,
+                    easing: 'easeInQuad',
+                    complete: () => div.remove()
+                });
+            }, 3000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (document.getElementById('extraMealForm').classList.contains('show')) {
+                fetchOffUsers();
+            }
+        });
+    </script>
+</body>
+</html>

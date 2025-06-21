@@ -3,159 +3,320 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meal Update</title>
-    <link rel="stylesheet" href="styles.css"> <!-- External CSS for styling -->
-    <script src="script.js" defer></script> <!-- External JS for functionality -->
+    <title>Meal Update - Satkhira Medical College</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
+            background-color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+            animation: fadeIn 0.5s ease-in;
         }
-
-        h1 {
-            text-align: center;
-            color: #333;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
-
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .meal-option {
-            margin: 10px 0;
-        }
-
-        .button {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            background-color: #28a745;
+        .sidebar {
+            background: linear-gradient(180deg, #1e40af, #3b82f6);
             color: white;
-            border: none;
-            border-radius: 5px;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .custom-checkbox {
+            appearance: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid #d1d5db;
+            border-radius: 0.25rem;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: all 0.2s ease-in-out;
         }
-
-        .button:hover {
-            background-color: #218838;
+        .custom-checkbox:checked {
+            background-color: #1e40af;
+            border-color: #1e40af;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3E%3Cpath fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clip-rule='evenodd'/%3E%3C/svg%3E");
+            background-size: 0.75rem;
+            background-position: center;
         }
-
-        .export-button {
-            background-color: #007bff;
+        .btn-primary {
+            background-color: #1e40af;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
-
-        .export-button:hover {
-            background-color: #0069d9;
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
         }
-
-        .additional-options {
-            margin: 10px 0;
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 0.5rem;
         }
-
-        .logout-button {
-            background-color: #dc3545; /* Red color for logout */
+        .table th {
+            background-color: #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
         }
-
-        .logout-button:hover {
-            background-color: #c82333;
+        .table th:hover {
+            background-color: #d1d5db;
+        }
+        .table tr {
+            transition: background-color 0.2s ease;
+        }
+        .table tr:hover {
+            background-color: #f9fafb;
+        }
+        .error-message {
+            color: #dc2626;
+            font-size: 0.875rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .error-message.show {
+            opacity: 1;
+        }
+        .success-message {
+            color: #15803d;
+            font-size: 0.875rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .success-message.show {
+            opacity: 1;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-bottom: 1rem;
+            }
+            .table-container {
+                overflow-x: auto;
+            }
+            .table {
+                min-width: 600px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-utensils text-2xl text-indigo-600"></i>
+                <h1 class="text-xl font-bold text-gray-800">Satkhira Medical College Meal Planner</h1>
+            </div>
+            <a href="/logout" class="text-sm text-white bg-red-600 px-4 py-2 rounded-md hover:bg-red-700 transition">Logout</a>
+        </div>
+    </header>
 
-    <div class="container">
-        <h1>Meal Update</h1>
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
+        <!-- Sidebar: User Details -->
+        <aside class="sidebar w-full md:w-1/4 p-6">
+            <h2 class="text-lg font-semibold mb-4">User Profile</h2>
+            <div id="user-details" class="space-y-2 text-sm">
+                <p><span class="font-medium">Name:</span> <span id="user-name" class="ml-1"></span></p>
+                <p><span class="font-medium">Class Roll:</span> <span id="user-roll" class="ml-1"></span></p>
+                <p><span class="font-medium">Batch:</span> <span id="user-batch" class="ml-1"></span></p>
+                <p><span class="font-medium">Gender:</span> <span id="user-gender" class="ml-1"></span></p>
+                <p><span class="font-medium">Total Meals:</span> <span id="user-meal-count" class="ml-1"></span></p>
+                <p><span class="font-medium">Deposit:</span> <span id="user-deposit" class="ml-1"></span></p>
+            </div>
+        </aside>
 
-        <form id="mealForm">
-            <div class="meal-option">
-                <label for="meal">Select Meal:</label><br>
-                <select id="meal" name="meal" required>
-                    <option value="">--Choose an option--</option>
-                    <option value="Lunch">Lunch</option>
-                    <option value="Dinner">Dinner</option>
-                    <option value="Both">Both</option>
-                    <option value="Off">Off</option>
-                </select>
+        <!-- Main Content: Form and Table -->
+        <main class="w-full md:w-3/4 space-y-6">
+            <!-- Meal Update Form -->
+            <div class="card p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Update Meal</h2>
+                <form id="meal-update-form" action="/meal-update" method="POST" class="space-y-4">
+                    <!-- Meal Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Select Meal</label>
+                        <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            <label class="flex items-center space-x-2">
+                                <input type="radio" name="meal" value="Lunch" class="form-radio text-indigo-600" required>
+                                <span class="text-sm text-gray-600">Lunch</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="radio" name="meal" value="Dinner" class="form-radio text-indigo-600">
+                                <span class="text-sm text-gray-600">Dinner</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="radio" name="meal" value="Both" class="form-radio text-indigo-600">
+                                <span class="text-sm text-gray-600">Both</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="radio" name="meal" value="Off" class="form-radio text-indigo-600">
+                                <span class="text-sm text-gray-600">Off</span>
+                            </label>
+                        </div>
+                        <p id="meal-error" class="error-message mt-1">Please select a meal option.</p>
+                    </div>
+
+                    <!-- Date Selection -->
+                    <div>
+                        <label for="date" class="block text-sm font-medium text-gray-700">Select Date</label>
+                        <input type="date" id="date" name="date" class="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                        <p id="date-error" class="error-message mt-1">Please select a valid date (not in the past).</p>
+                    </div>
+
+                    <!-- Additional Items Checkboxes -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Additional Items</label>
+                        <div class="mt-2 space-y-2">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" name="additionalItems" value="Mutton" class="custom-checkbox">
+                                <span class="text-sm text-gray-600">Mutton</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" name="additionalItems" value="Egg (Poultry)" class="custom-checkbox">
+                                <span class="text-sm text-gray-600">Egg (Poultry)</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" name="additionalItems" value="Egg (Fish)" class="custom-checkbox">
+                                <span class="text-sm text-gray-600">Egg (Fish)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-primary w-full text-white py-2 px-4 rounded-md text-sm font-medium">Update Meal</button>
+                </form>
+                <p id="form-message" class="mt-2 text-center text-sm"></p>
             </div>
 
-            <div class="additional-options">
-                <label>Additional Items:</label><br>
-                <input type="checkbox" id="mutton" name="additionalItems" value="Mutton">
-                <label for="Mutton">Mutton</label><br>
-                <input type="checkbox" id="egg" name="additionalItems" value="Egg">
-                <label for="egg">Egg instead of fish</label><br>
-                <input type="checkbox" id="off" name="additionalItems" value="Off">
-                <label for="off">Egg instead of poultry</label><br>
+            <!-- Meal History Table -->
+            <div class="card p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Meal History</h2>
+                <div class="table-container">
+                    <table class="table w-full text-sm">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-2">Date</th>
+                                <th class="px-4 py-2">Meal</th>
+                                <th class="px-4 py-2">Additional Items</th>
+                                <th class="px-4 py-2">Lunch Served</th>
+                                <th class="px-4 py-2">Dinner Served</th>
+                                <th class="px-4 py-2">Daily Meal Count</th>
+                            </tr>
+                        </thead>
+                        <tbody id="meal-history-table"></tbody>
+                    </table>
+                </div>
             </div>
-
-            <button type="button" class="button" onclick="updateMeal()">Update Meal</button>
-        </form>
-
-        <button class="button export-button" onclick="exportToExcel()">Export Meal Update to Excel</button>
-        
-        <button class="button logout-button" onclick="logout()">Logout</button>
+        </main>
     </div>
 
     <script>
-        // Function to export meal update to Excel
-        async function exportToExcel() {
+        // Fetch user details
+        async function fetchUserDetails() {
             try {
-                const response = await fetch('/export-excel');
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = 'meal-update-list.xlsx';
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                alert('Excel file downloaded! Don’t forget to thank Peal!');
+                const response = await fetch('/meal-dashboard');
+                if (!response.ok) throw new Error('Failed to fetch user details');
+                const data = await response.json();
+                document.getElementById('user-name').textContent = data.name || 'N/A';
+                document.getElementById('user-roll').textContent = data.classRoll || 'N/A';
+                document.getElementById('user-batch').textContent = data.batch || 'N/A';
+                document.getElementById('user-gender').textContent = data.gender || 'N/A';
+                document.getElementById('user-meal-count').textContent = data.totalMealCount || '0';
+                document.getElementById('user-deposit').textContent = data.deposit || '0';
             } catch (error) {
-                console.error('Error exporting to Excel:', error);
+                console.error('Error fetching user details:', error);
+                document.getElementById('user-details').innerHTML = '<p class="text-red-500">Error loading user details.</p>';
             }
         }
 
-        // Function to update meal
-        async function updateMeal() {
-            const formData = new FormData(document.getElementById('mealForm'));
-            const mealData = {
-                meal: formData.get('meal'),
-                additionalItems: formData.getAll('additionalItems')
-            };
+        // Fetch meal history
+        async function fetchMealHistory() {
+            try {
+                console.log('Fetching meal history from /api/meal-history');
+                const response = await fetch('/api/meal-history');
+                if (!response.ok) throw new Error('Failed to fetch meal history');
+                const data = await response.json();
+                const tbody = document.getElementById('meal-history-table');
+                tbody.innerHTML = '';
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-4 py-2">${new Date(item.date).toLocaleDateString('en-GB')}</td>
+                        <td class="px-4 py-2">${item.meal || 'N/A'}</td>
+                        <td class="px-4 py-2">${item.additionalItems?.join(', ') || '-'}</td>
+                        <td class="px-4 py-2">${item.lunchServed ? 'Yes' : 'No'}</td>
+                        <td class="px-4 py-2">${item.dinnerServed ? 'Yes' : 'No'}</td>
+                        <td class="px-4 py-2">${item.dailyMealCount || 0}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error fetching meal history:', error);
+                document.getElementById('meal-history-table').innerHTML = '<tr><td colspan="6" class="text-red-500 px-4 py-2">Error loading meal history.</td></tr>';
+            }
+        }
 
+        // Form submission
+        document.getElementById('meal-update-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const meal = form.querySelector('input[name="meal"]:checked')?.value;
+            const date = form.querySelector('#date').value;
+            const additionalItems = Array.from(form.querySelectorAll('input[name="additionalItems"]:checked')).map(input => input.value);
+            const mealError = document.getElementById('meal-error');
+            const dateError = document.getElementById('date-error');
+            const formMessage = document.getElementById('form-message');
+
+            // Reset messages
+            mealError.classList.remove('show');
+            dateError.classList.remove('show');
+            formMessage.classList.remove('success-message', 'error-message', 'show');
+            formMessage.textContent = '';
+
+            // Validate inputs
+            if (!meal) {
+                mealError.classList.add('show');
+                return;
+            }
+            const selectedDate = new Date(date);
+            const now = new Date();
+            if (selectedDate < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+                dateError.classList.add('show');
+                return;
+            }
+
+            // Submit form
             try {
                 const response = await fetch('/meal-update', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(mealData)
+                    body: JSON.stringify({ meal, date, additionalItems }),
                 });
-
-                if (response.ok) {
-                    alert('Done. Don’t forget to thank Peal!');
-                } else {
-                    const errorData = await response.json();
-                    alert(errorData.message);
-                }
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Failed to update meal');
+                formMessage.classList.add('success-message', 'show');
+                formMessage.textContent = data.message || 'Meal updated successfully!';
+                form.reset();
+                fetchMealHistory();
             } catch (error) {
                 console.error('Error updating meal:', error);
+                formMessage.classList.add('error-message', 'show');
+                formMessage.textContent = error.message || 'Error updating meal. Please try again.';
             }
-        }
+        });
 
-        // Logout function
-        function logout() {
-            alert("Don’t forget to thank Peal!");
-            window.location.href = '/';
-        }
+        // Initialize page
+        fetchUserDetails();
+        fetchMealHistory();
     </script>
 </body>
 </html>
