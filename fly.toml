@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for smc-meal on 2025-06-21T10:23:53Z
+# fly.toml app configuration file generated for smc-meal-xbqe7q on 2025-06-21T13:51:00Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'smc-meal'
+app = 'smc-meal-xbqe7q'
 primary_region = 'sin'
 
 [build]
