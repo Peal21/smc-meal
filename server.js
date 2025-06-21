@@ -6,24 +6,16 @@ const MongoStore = require('connect-mongo');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const cron = require('node-cron');
-require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Verify .env variables
-if (!process.env.MONGODB_URI) {
-  console.error('Error: MONGODB_URI is not defined in .env file');
-  process.exit(1);
-}
-if (!process.env.SESSION_SECRET) {
-  console.warn('Warning: SESSION_SECRET is not defined in .env file. Using default secret.');
-}
+const PORT = 3000; // Hardcoded PORT
+const MONGODB_URI = 'mongodb+srv://askpeal121:Peal1234@cluster0.teofx.mongodb.net/mealPlanner?retryWrites=true&w=majority'; // Hardcoded MONGODB_URI
+const SESSION_SECRET = 'your-strong-session-secret'; // Hardcoded SESSION_SECRET
 
 // MongoDB Connection
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
+    await mongoose.connect(MONGODB_URI, {
       serverSelectionTimeoutMS: 5000,
       useNewUrlParser: true,
       useUnifiedTopology: true
@@ -41,11 +33,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-strong-session-secret',
+  secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI,
+    mongoUrl: MONGODB_URI,
     collectionName: 'sessions',
     ttl: 24 * 60 * 60
   }).on('error', err => console.error('MongoStore error:', err)),
@@ -382,26 +374,52 @@ app.get('/staff/serving', requireStaff, async (req, res) => {
     let userQuery = {};
     if (batch && batch !== 'all') userQuery.batch = batch;
     if (gender && gender !== 'all') userQuery.gender = gender;
-    const users = await User.find(userQuery).sort({ batch: 1, classRoll: 1 }).lean();
+    console.log('User query:', userQuery); // Debug log
+
+    let users = await User.find(userQuery).sort({ batch: 1, classRoll: 1 }).lean();
+    if (users.length === 0 && Object.keys(userQuery).length > 0) {
+      console.log('No users found with filter, fetching all users');
+      users = await User.find().sort({ batch: 1, classRoll: 1 }).lean();
+    }
+    if (users.length === 0) {
+      console.error('No users found in database');
+      return res.status(500).render('staff-serving', {
+        users: [],
+        mealHistories: [],
+        batches: ['09', '10', '11', '12', '13'],
+        genders: ['Male', 'Female'],
+        selectedBatch: batch || 'all',
+        selectedGender: gender || 'all',
+        selectedDate: new Date().toISOString().split('T')[0],
+        isEditable: true,
+        error: 'No users found in database'
+      });
+    }
+    console.log('Fetched users count:', users.length);
+
     const selectedDate = date ? new Date(date) : new Date();
     selectedDate.setHours(0, 0, 0, 0);
 
     let mealHistories = await MealHistory.find({ date: selectedDate }).lean();
-    for (const user of users) {
-      if (!mealHistories.find(mh => mh.userId.toString() === user._id.toString())) {
-        const previousMeal = await MealHistory.findOne({ userId: user._id, date: { $lt: selectedDate } }).sort({ date: -1 }).lean();
-        await new MealHistory({
-          userId: user._id,
-          date: selectedDate,
-          meal: previousMeal ? previousMeal.meal : 'Off',
-          additionalItems: previousMeal ? previousMeal.additionalItems : [],
-          dailyMealCount: previousMeal ? (previousMeal.meal === 'Both' ? 2 : previousMeal.meal === 'Lunch' || previousMeal.meal === 'Dinner' ? 1 : 0) : 0,
-          lunchServed: false,
-          dinnerServed: false
-        }).save();
+    if (mealHistories.length < users.length) {
+      console.log('Populating missing MealHistory entries');
+      for (const user of users) {
+        if (!mealHistories.find(mh => mh.userId.toString() === user._id.toString())) {
+          const previousMeal = await MealHistory.findOne({ userId: user._id, date: { $lt: selectedDate } }).sort({ date: -1 }).lean();
+          await new MealHistory({
+            userId: user._id,
+            date: selectedDate,
+            meal: previousMeal ? previousMeal.meal : 'Off',
+            additionalItems: previousMeal ? previousMeal.additionalItems : [],
+            dailyMealCount: previousMeal ? (previousMeal.meal === 'Both' ? 2 : previousMeal.meal === 'Lunch' || previousMeal.meal === 'Dinner' ? 1 : 0) : 0,
+            lunchServed: false,
+            dinnerServed: false
+          }).save();
+        }
       }
+      mealHistories = await MealHistory.find({ date: selectedDate }).lean();
     }
-    mealHistories = await MealHistory.find({ date: selectedDate }).lean();
+    console.log('Fetched meal histories count:', mealHistories.length);
 
     const batches = ['09', '10', '11', '12', '13'];
     const genders = ['Male', 'Female'];
@@ -417,7 +435,17 @@ app.get('/staff/serving', requireStaff, async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading serving page:', error);
-    res.status(500).send('Server error');
+    res.status(500).render('staff-serving', {
+      users: [],
+      mealHistories: [],
+      batches: ['09', '10', '11', '12', '13'],
+      genders: ['Male', 'Female'],
+      selectedBatch: batch || 'all',
+      selectedGender: gender || 'all',
+      selectedDate: new Date().toISOString().split('T')[0],
+      isEditable: true,
+      error: 'Failed to load users or meal data'
+    });
   }
 });
 
